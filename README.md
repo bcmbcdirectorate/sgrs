@@ -29,6 +29,11 @@ Open it in any browser on any device. It talks to the backend over the internet.
 
 On the sign-in screen you can also click any demo account to auto-fill it.
 
+**New students can self-register.** From the sign-in screen, click "New student? Create an
+account", fill in name, email, institution (optional) and a password (min 6 characters),
+and you are signed in immediately. The account is created in the backend with a bcrypt-hashed
+password. Institution and officer accounts are still created by the administrator.
+
 ## 3. What it does
 
 - **File a grievance** (student or institution) — category, scheme, application no.,
