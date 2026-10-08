@@ -508,8 +508,33 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
       '<div class="hr"></div>' +
       '<div class="small muted" style="margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em">Demo accounts — click to fill</div>' +
       '<div class="demo-grid">' + demos + '</div></div>' +
-      '<div class="center" style="margin-top:14px"><a href="#/track" class="small">Track a grievance without signing in &rarr;</a></div>' +
+      '<div class="center" style="margin-top:14px"><a href="#/register" class="small">New student? Create an account &rarr;</a></div>' +
+      '<div class="center" style="margin-top:8px"><a href="#/track" class="small">Track a grievance without signing in</a></div>' +
       '</div></div></div>';
+  }
+
+  function viewRegister() {
+    return '<div class="authwrap"><div class="authhero"><div class="emblem">&#127891;</div>' +
+      '<h1>Create your student account</h1>' +
+      '<p>Register once, then file and track your scholarship grievances online. Every grievance you raise gets its own tracking ID.</p>' +
+      '<div class="feats">' +
+      '<div><span class="ic">&#128196;</span><span>File and track grievances online with an auto-generated ID</span></div>' +
+      '<div><span class="ic">&#9203;</span><span>Automatic SLA-based escalation across three levels</span></div>' +
+      '<div><span class="ic">&#128276;</span><span>Notifications on every status change</span></div>' +
+      '</div></div>' +
+      '<div class="authpane"><div class="authbox"><div class="card">' +
+      '<h2>Student registration</h2><p class="small muted" style="margin-bottom:16px">' + esc(ORG) + ' &middot; Government of India</p>' +
+      '<form data-form="register">' +
+      '<div class="field"><label>Full name</label><input name="name" required placeholder="e.g. Ravi Kumar"></div>' +
+      '<div class="field"><label>Email</label><input name="email" type="email" required placeholder="you@example.in"></div>' +
+      '<div class="field"><label>Institution / school (optional)</label><input name="org" placeholder="e.g. Govt. High School, Nagpur"></div>' +
+      '<div class="field"><label>Password</label><input name="password" type="password" required minlength="6" placeholder="At least 6 characters"></div>' +
+      '<div class="field"><label>Confirm password</label><input name="password2" type="password" required minlength="6" placeholder="Re-enter password"></div>' +
+      '<div id="regErr" class="alert danger hidden"></div>' +
+      '<button class="btn block" type="submit">Create account</button></form>' +
+      '<div class="hr"></div>' +
+      '<div class="center small">Already have an account? <a href="#/login">Sign in</a></div>' +
+      '</div></div></div></div>';
   }
 
   function navFor(u) {
@@ -714,6 +739,7 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
     var r = route(), u = currentUser(), app = $("#app");
     if (!u) {
       if (r.name === "track") { app.innerHTML = viewTrack(null, r.arg); return; }
+      if (r.name === "register") { app.innerHTML = viewRegister(); return; }
       app.innerHTML = viewLogin(); return;
     }
     if (r.name === "login" || r.name === "") { go("dashboard"); return; }
@@ -779,6 +805,26 @@ Resources:`;for(let t of c){if(!t||typeof t!=`string`)throw Error(`@supabase/aut
         }, session);
         toast("Grievance " + g.id + " filed"); go("g/" + g.id); render();
       } catch (ex) { toast("Could not submit. Please try again."); busy(btn, false); }
+      return;
+    }
+    if (kind === "register") {
+      var rn = (fd.get("name") || "").trim(), re = (fd.get("email") || "").trim(), ro = (fd.get("org") || "").trim();
+      var rp = fd.get("password") || "", rp2 = fd.get("password2") || "", rerr = $("#regErr");
+      var showErr = function (m) { if (rerr) { rerr.textContent = m; rerr.classList.remove("hidden"); } };
+      if (rp !== rp2) { showErr("The two passwords do not match."); return; }
+      if (rp.length < 6) { showErr("Password must be at least 6 characters."); return; }
+      busy(btn, true, "Creating account...");
+      try {
+        var rr = await sb.rpc("register", { p_name: rn, p_email: re, p_password: rp, p_org: ro });
+        if (rr.error) throw rr.error;
+        var out2 = rr.data;
+        if (!out2 || !out2.ok) { showErr((out2 && out2.error) || "Could not create the account."); busy(btn, false); return; }
+        session = out2.user; localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+        await refreshAndRender(); toast("Account created. Welcome, " + session.name + "!");
+      } catch (ex) {
+        showErr("Could not reach the server. Check your connection and try again.");
+        busy(btn, false);
+      }
       return;
     }
     if (kind === "track") { var q = (fd.get("gid") || "").trim(); go(q ? "track/" + q : "track"); render(); return; }
