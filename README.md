@@ -1,22 +1,20 @@
 # Scholarship Grievance Redressal System (SGRS)
 
-A working, role-based web app for lodging, tracking and resolving scholarship-related
+A role-based web app for lodging, tracking and resolving scholarship-related
 grievances with **multi-level escalation**, **notifications** and **dashboards**.
+
+Records are stored in a **shared Supabase (Postgres) backend**, so every device —
+a student's phone, an officer's laptop — sees the same live data.
 
 Organisation shown: MBC & DNC Directorate.
 
 ---
 
-## 1. Run it
+## 1. Live site
 
-It is a single self-contained file — **no server, no install, no internet needed**.
+**https://bcmbcdirectorate.github.io/sgrs/**
 
-- **Quickest:** double-click `index.html` (it opens in any browser).
-- **Local server (optional):** `python3 -m http.server 8000` then open `http://localhost:8000`.
-
-Data is stored in your browser (`localStorage`), so it survives refreshes on that
-browser. The app starts with an **empty register** — no demo grievances. The six
-login accounts are pre-created so you can sign in and add your own records.
+Open it in any browser on any device. It talks to the backend over the internet.
 
 ## 2. Demo logins
 
@@ -38,49 +36,41 @@ On the sign-in screen you can also click any demo account to auto-fill it.
 - **Track by ID** publicly, without signing in — status plus full timeline.
 - **Multi-level escalation** — Level 1 (Institution/District) → Level 2 (Directorate) →
   Level 3 (Appellate Authority).
-- **SLA-based auto-escalation** — each level has a resolution window (L1: 7 days,
-  L2: 5 days, L3: 3 days). If a grievance breaches its window it is escalated to the
-  next level automatically, and the change is recorded in the timeline.
+- **SLA-based auto-escalation** — L1: 7 days, L2: 5 days, L3: 3 days. A breach escalates
+  the grievance automatically and records it in the timeline.
 - **Officer actions** — mark under review, add remark, resolve, reject, or escalate.
-- **Notifications** — an in-app bell + notifications page; filers and the concerned
+- **Notifications** — in-app bell + notifications page; filers and the concerned
   officers are notified on every status change.
-- **Dashboards** — role-aware stats, "needs attention" (overdue) list, filters
-  (status / category / priority / search) and a category breakdown chart for the
-  directorate.
+- **Dashboards** — role-aware stats, overdue list, filters and a category chart.
 
-## 4. Go live for free (pick one)
+## 4. Backend (Supabase)
 
-The app is a single static file, so any free static host works.
+- Project region: Mumbai (`ap-south-1`), free plan.
+- Tables: `profiles`, `credentials`, `grievances`, `grievance_events`,
+  `notifications`, `notification_reads`, `counters`.
+- `login(email, password)` is a Postgres function that verifies the password with
+  bcrypt (`pgcrypto`) and returns the profile. Passwords live in `credentials`,
+  which the public API **cannot read** (row-level security with no policy).
+- `next_grievance_id()` generates the sequential grievance ID.
 
-**Option A — Netlify Drop (fastest, no account needed to start)**
-1. Go to `https://app.netlify.com/drop`.
-2. Drag the `index.html` file (or the whole folder) onto the page.
-3. You get a live URL instantly. Claim it with a free account to keep it.
+## 5. Security — please read
 
-**Option B — GitHub Pages (free, permanent)**
-1. Create a repository, e.g. `sgrs`.
-2. Upload `index.html` (rename it `index.html` if needed).
-3. Settings → Pages → Source: `main` branch, `/root` → Save.
-4. Your site appears at `https://<your-username>.github.io/sgrs/`.
+This is a **pilot** build. Logins are real (passwords are hashed, and the credential
+table is not exposed), but the data tables use **permissive row-level security**, because
+the app authenticates against a custom `login()` function rather than Supabase Auth.
+In practice that means anyone who has the site URL can read and write grievances through
+the API — fine for a demo or a closed pilot with non-sensitive data, but **not** suitable
+for real citizen data as-is.
 
-**Option C — Vercel / Cloudflare Pages**
-Import the repository or drag-and-drop the folder; no build step is required
-(it is plain HTML/CSS/JS).
-
-## 5. Important note for real use
-
-This build keeps data **in the browser only**, which makes it perfect for a demo,
-a pilot, or a stakeholder walkthrough. For a real, multi-user rollout where students,
-institutions and officers share one live database, it needs a **backend** (e.g. a small
-API + database) and login against your own user directory. The current UI, roles,
-workflow and escalation logic are built so that this backend can be added without
-redesigning the screens — the data layer is isolated and easy to swap.
+The upgrade path (recommended before any real rollout): switch to **Supabase Auth**
+(email/password) and replace the permissive policies with rules keyed to `auth.uid()`,
+so students see only their own grievances and officers only their level. The app's data
+layer is isolated, so this can be done without redesigning the screens.
 
 ## 6. Files
 
-- `index.html` — the entire application (HTML + CSS + JS inlined).
-- Screenshots — preview of the main screens.
+- `index.html` — the entire application (HTML + CSS + JS + Supabase SDK inlined).
 
 ---
 
-Demo build. Sample data is illustrative only.
+Pilot build. Sample accounts only.
