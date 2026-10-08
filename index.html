@@ -252,7 +252,7 @@ footer.site{max-width:1240px;margin:0 auto;padding:18px 20px 30px;color:var(--mu
   /* ---------- Domain config ---------- */
   var ORG = "MBC & DNC Directorate";
   var APP = "Scholarship Grievance Redressal System";
-  var DB_KEY = "sgrs_db_v1";
+  var DB_KEY = "sgrs_db_v2";
   var SESSION_KEY = "sgrs_session_v1";
   var YEAR = new Date().getFullYear();
 
@@ -328,7 +328,7 @@ footer.site{max-width:1240px;margin:0 auto;padding:18px 20px 30px;color:var(--mu
     return db.users.filter(function (u) { return u.id === s.id; })[0] || null;
   }
 
-  /* ---------- Seed demo data ---------- */
+  /* ---------- Seed accounts only (no demo grievances) ---------- */
   function seed() {
     var users = [
       { id: "u_stu", name: "Anjali Verma", email: "student@demo.in", password: "student123", role: "student", org: "St. Xavier's College, Mumbai" },
@@ -348,54 +348,6 @@ footer.site{max-width:1240px;margin:0 auto;padding:18px 20px 30px;color:var(--mu
     // counters start
     d.counters[YEAR] = 0;
 
-    var seedRows = [
-      { cat: "Payment / disbursement pending", scheme: "Post-Matric Scholarship", applicant: "Anjali Verma", type: "student", appNo: "PM-2026-88231", inst: "St. Xavier's College, Mumbai", desc: "Scholarship approved in March but amount not credited to bank account till date.", status: "In Progress", level: 1, priority: "medium", age: 3 },
-      { cat: "Documents rejected", scheme: "Merit-cum-Means Scholarship", applicant: "Rahul Meena", type: "student", appNo: "MCM-2026-11450", inst: "Delhi Technological University", desc: "Income certificate rejected without reason; re-uploaded but still marked invalid.", status: "Submitted", level: 1, priority: "high", age: 1 },
-      { cat: "Application not received", scheme: "Pre-Matric Scholarship", applicant: "Registrar, Govt. Arts College", type: "institution", appNo: "BULK-2026-0042", inst: "Govt. Arts College, Pune", desc: "48 student applications submitted via portal on 12/06 are not reflecting in the institution dashboard.", status: "Escalated", level: 2, priority: "high", age: 6 },
-      { cat: "Eligibility dispute", scheme: "Top Class Education Scheme", applicant: "Priya Kulkarni", type: "student", appNo: "TCE-2026-00781", inst: "IIT Bombay", desc: "Marked ineligible citing attendance, but attendance record attached shows 82%.", status: "Escalated", level: 3, priority: "high", age: 12 },
-      { cat: "Wrong bank / Aadhaar details", scheme: "Post-Matric Scholarship", applicant: "Mohd. Faizan", type: "student", appNo: "PM-2026-90112", inst: "Aligarh Muslim University", desc: "Bank account linked incorrectly; payment returned. Correction request pending.", status: "In Progress", level: 1, priority: "medium", age: 2 },
-      { cat: "Portal / technical issue", scheme: "Pre-Matric Scholarship", applicant: "Sneha Patil", type: "student", appNo: "PRE-2026-33490", inst: "Zilla Parishad School", desc: "Unable to submit final form; OTP not received since 3 days.", status: "Resolved", level: 1, priority: "low", age: 5 },
-      { cat: "Duplicate application", scheme: "Post-Matric Scholarship", applicant: "Karthik Reddy", type: "student", appNo: "PM-2026-77120", inst: "Osmania University", desc: "Two applications created by mistake; request to cancel duplicate and refund fee.", status: "Resolved", level: 1, priority: "low", age: 8 },
-      { cat: "Other", scheme: "Fellowship / Hostel grant", applicant: "Registrar, Govt. Arts College", type: "institution", appNo: "FH-2026-00091", inst: "Govt. Arts College, Pune", desc: "Hostel grant list mismatch with sanctioned strength for 2026-27.", status: "Submitted", level: 1, priority: "medium", age: 0 }
-    ];
-
-    seedRows.forEach(function (r, i) {
-      var created = addDays(nowISO(), -(r.age + 2));
-      var g = {
-        id: nextId(d),
-        subject: r.cat,
-        category: r.cat,
-        scheme: r.scheme,
-        applicantName: r.applicant,
-        applicantType: r.type,
-        applicationNo: r.appNo,
-        institution: r.inst,
-        description: r.desc,
-        status: r.status,
-        level: r.level,
-        priority: r.priority,
-        createdBy: r.type === "student" ? "u_stu" : "u_inst",
-        createdByName: r.applicant,
-        createdAt: created,
-        updatedAt: created,
-        dueAt: addDays(created, SLA[r.level]),
-        assignedTo: null,
-        resolution: null,
-        timeline: [
-          { at: created, by: r.applicant, action: "Grievance filed", note: "Submitted via portal.", from: null, to: "Submitted", sys: false }
-        ]
-      };
-      if (OPEN_STATUSES.indexOf(g.status) === -1) {
-        var resAt = addDays(created, 3 + (i % 3));
-        g.timeline.push({ at: resAt, by: "District Officer — R. Nair", action: g.status, note: g.status === "Resolved" ? "Resolved at source and communicated to applicant." : "Closed after review.", from: "In Progress", to: g.status, sys: false });
-        g.updatedAt = resAt;
-      } else if (g.status === "In Progress") {
-        g.timeline.push({ at: addDays(created, 1), by: "District Officer — R. Nair", action: "Under review", note: "Forwarded to accounts section for verification.", from: "Submitted", to: "In Progress", sys: false });
-      } else if (g.status === "Escalated") {
-        g.timeline.push({ at: addDays(created, 4), by: "System", action: "Auto-escalated", note: "SLA breached at Level 1; escalated to Level " + g.level + ".", from: "Submitted", to: "Escalated", sys: true });
-      }
-      d.grievances.push(g);
-    });
     return d;
   }
   function nextId(d) {
