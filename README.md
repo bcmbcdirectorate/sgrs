@@ -15,7 +15,8 @@ It is a single self-contained file — **no server, no install, no internet need
 - **Local server (optional):** `python3 -m http.server 8000` then open `http://localhost:8000`.
 
 Data is stored in your browser (`localStorage`), so it survives refreshes on that
-browser. The app ships with seeded demo grievances.
+browser. The app starts with an **empty register** — no demo grievances. The six
+login accounts are pre-created so you can sign in and add your own records.
 
 ## 2. Demo logins
 
